@@ -47,7 +47,7 @@ const char *lmailbodyn="lmailbody";
 const char *lmailtextn="lmailtext";
 
 const DBSTyp myDBS=MySQL;
-// #define mitinhalt
+#define mitinhalt
 
 using namespace std;
 string out1;
@@ -825,11 +825,13 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
             oDstrstr<<obj->getData();
             Log(string("")+drot+"Objekt-Daten: "+schwarz+oDstrstr.str(),obverb,oblog);
 //            textids.push_back(texttyp(atol(obj->getId().c_str()),0,oDstrstr.str())); // Zeiger hexadezimal
-            if (outs!=*textoutsp) {
-             cout<<violett<<outs.length()<<schwarz<<endl;
-            textids.push_back(texttyp(atol(obj->getId().c_str()),0,outs.c_str()));
+            if (outs.length()) {
+              if (outs!=*textoutsp) {
+                textids.push_back(texttyp(atol(obj->getId().c_str()),0,outs.c_str()));
+             }
             }
           }
+          cout<<"Stelle 2"<<endl;
 #ifdef mitinhalt		 
           Log(string("")+rot+"HTML-Text: "+schwarz+outs,obverb,oblog);
 #endif		
@@ -1326,8 +1328,8 @@ int beaVerz(string *pfad,uchar wiepfad, unsigned long minuten,DB *My, const char
         // ZPKT(" nach schon eingetr: ");
       }
     } // if (!rschau.obfehl) 
-    cout<<"My->affrows(): "<<gelb<<My->affrows()<<schwarz<<endl;
-    Log("Fertig mit nachrnr: "+violetts+ltoan(nachrnr)+schwarz,obverb,0);
+    string maff=ltoan(My->affrows());
+    Log("Fertig mit nachrnr: "+violetts+ltoan(nachrnr)+schwarz+" My->affrows(): "+blau+maff+schwarz,obverb,0);
   } // for (unsigned nachrnr=0; nachrnr<verg.size(); ++nachrnr)
   return attz;
 } // beaVerz
