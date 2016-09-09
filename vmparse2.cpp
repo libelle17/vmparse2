@@ -831,7 +831,6 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
              }
             }
           }
-          cout<<"Stelle 2"<<endl;
 #ifdef mitinhalt		 
           Log(string("")+rot+"HTML-Text: "+schwarz+outs,obverb,oblog);
 #endif		
