@@ -35,6 +35,8 @@ printf(drot, unter windows escape-Sequenzen rausfielselen und durch SetConsoleTe
 //char logdatei[PATH_MAX+1]="v:\\log_termine.txt";
 #endif
 #define obfstream
+string nix;
+class linstcl linst;
 
 
 const char *Txkonsolecl::TextC[T_konsoleMAX+1][Smax]=
@@ -157,6 +159,10 @@ const char *Txkonsolecl::TextC[T_konsoleMAX+1][Smax]=
   {", als Dienst eingerichtet von '",", installed as service by '"},
   // T_Versuch
   {", Versuch: ",", try no.: "},
+  // T_machfit
+  {"machfit()","makefit()"},
+  // T_obslaeuft
+  {"obslaeuft()","whetheritruns()"},
   {"",""}
 }; // const char *Txkonsolecl::TextC[T_konsoleMAX+1][Smax]=
 
@@ -258,7 +264,7 @@ if (alt[0]==0 || !strcmp(alt,neu)) {
 erg=u;
 } else {
 for(char* p=(char*)u.c_str();p<(char*)u.c_str()+u.length();p++)  {
-if (logdatei[0]=='1') exit(0);
+if (logdatei[0]=='1') xit(0);
 char *pi = (char*)alt;
 int i=0,gleich=1;
 for(;*(pi+i);i++)
@@ -592,7 +598,7 @@ int kuerzelogdatei(const char* logdatei,int obverb)
   //	vector<string> Zeilen;   //Der Vektor Zeilen enthält String-Elemente
   char Zeile[256]; //Die maximale Zeilenlänge beträgt 255 Zeichen, weil ein String mit einer Null endet
   if (obverb>1) {
-    cout<<"verbose: "<<(int)obverb<<Txk[T_kuerze_logdatei]<<drot<<logdatei<<schwarz<<endl;
+    cout<<"obverb: "<<(int)obverb<<Txk[T_kuerze_logdatei]<<drot<<logdatei<<schwarz<<endl;
   }
   //  Log(string("kuerzelogdatei: ") + drot + logdatei + schwarz,obverb,0);
   // ersetze(logdatei,"\\","\\\\")
@@ -689,7 +695,6 @@ int kuerzelogdatei(const char* logdatei,int obverb)
             //          	  char tbuf[20];
             //              strftime(tbuf, 18,"%d.%m.%y %X",localtime(&gesz));
             //              <<"Datum: "<<tbuf<<endl;
-            //              exit(0);
             time_t jetzt;
             jetzt=time(0);
             sekunden=(long)(jetzt-gesz);
@@ -1544,7 +1549,7 @@ int systemrueck(const string& cmd, char obverb, int oblog, vector<string> *rueck
   string hcmd;
   uchar obfind=(cmd.substr(0,4)=="find" || cmd.substr(0,9)=="sudo find");
   if (obfind && (obverb<1 || strcmp(curruser(),"root"))) {
-   hcmd=cmd+" 2>/dev/null";
+   hcmd=cmd+" 2>/dev/null; true";
    czg=&hcmd;
   }
   // "obfind: "<<(int)obfind<<", obverb: "<<(int)obverb<<", curruser(): "<<curruser()<<", '"<<violett<<*czg<<schwarz<<"'"<<endl;
@@ -2089,6 +2094,7 @@ string linstcl::ersetzeprog(const string& prog)
     case dnf: case yum:
       if (prog=="mariadb") return "mariadb-server";
       if (prog=="kernel-source") return "kernel-devel-$(uname -r)";
+      if (prog=="tiff") return "libtiff-tools";
       if (prog=="libcapi20-2") return "isdn4k-utils";
       if (prog=="libcapi20-3") return "";
       if (prog=="capiutils") return "";
@@ -2193,6 +2199,19 @@ string meinpfad() {
   return string(buff);
 } // meinpfad
 
+string gethome()
+{
+ static string erg;
+ if (erg.empty()) {
+   svec srueck;
+   systemrueck("echo $HOME",0,0,&srueck);
+   if (srueck.size()) {
+     erg=srueck[0];
+   }
+ }
+ return erg;
+} // string gethome()
+
 servc::servc(string vsname,string vename,int obverb, int oblog): sname((vsname.empty()?vename:vsname)),ename(vename) 
 {
   machfit(obverb,oblog);
@@ -2200,6 +2219,37 @@ servc::servc(string vsname,string vename,int obverb, int oblog): sname((vsname.e
 
 int servc::machfit(int obverb,int oblog, binaer nureinmal)
 {
+  Log(violetts+Txk[T_machfit]+schwarz+" sname: "+violett+sname+schwarz+" serviceda: "+blau+(serviceda?"1":"0")+schwarz+
+      " servicelaeuft: "+blau+(servicelaeuft?"1":"0")+schwarz, obverb,oblog);
+
+    if (serviceda && !servicelaeuft) {
+//      svec sr1;
+//      systemrueck("journalctl -xen 1 \"$(systemctl show '"+sname+"' | awk -F'={ path=| ;' '/ExecStart=/{print $2}')\" | tail -n 1",obverb,0,&sr1);
+//      if (sr1.size()) KLA
+//       if (sr1[0].find("permission")!=string::npos) KLA
+        svec sr2;
+        systemrueck("sestatus",obverb,oblog,&sr2);
+        uchar obse=0;
+        for(size_t j=0;j<sr2.size();j++) {
+         if (!sr2[j].find("Current mode:"))
+          if (sr2[j].find("enforcing")!=string::npos) {
+           obse=1; 
+           break;
+          }
+        }
+        if (obse) {
+          linst.doinst("policycoreutils-python-utils",obverb+1,oblog,"audit2allow");
+          systemrueck("sudo setenforce 0",obverb,oblog);
+          restart(obverb,oblog);
+          systemrueck("sudo grep \""+ename+"\" /var/log/audit/audit.log | audit2allow -M \""+sname+"_selocal\"",obverb,oblog);
+          systemrueck("sudo setenforce 1",obverb,oblog);
+          linst.doinst("policycoreutils",obverb+1,oblog,"semodule");
+          systemrueck("sudo semodule -i \""+sname+"_selocal.pp\"",obverb,oblog);
+          exit(0);
+        }
+//       KLZ
+//      KLZ
+    } // if (serviceda && !servicelaeuft) 
     if (!obslaeuft(obverb,oblog,nureinmal)) {
       restart(obverb,oblog);
     }
@@ -2209,7 +2259,7 @@ int servc::machfit(int obverb,int oblog, binaer nureinmal)
 } // int servc::machfit(int obverb,int oblog)
 
 // wird aufgerufen in: hservice_faxq_hfaxd, hservice_faxgetty
-uchar servc::spruef(const string& sbez,uchar obfork, const string& parent, const string& sexec, const string& CondPath, const string& After, 
+uchar servc::spruef(const string& sbez, uchar obfork, const string& parent, const string& sexec, const string& CondPath, const string& After, 
                     const string& wennnicht0, int obverb,int oblog)
 {
   Log(violetts+Txk[T_spruef_sname]+schwarz+sname,obverb,oblog);
@@ -2288,20 +2338,45 @@ uchar servc::spruef(const string& sbez,uchar obfork, const string& parent, const
 // wird aufgerufen in: pruefhyla, pruefcapi, spruef
 int servc::obslaeuft(int obverb,int oblog, binaer nureinmal)
 {
+//  Log(violetts+Txk[T_obslaeuft]+schwarz+" sname: "+violett+sname+schwarz,obverb,oblog);
   perfcl prf(Txk[T_Aktiviere_Dienst]+sname);
+  size_t runde=0;
   while (1) {
+    runde++;
     svec sysrueck;
     servicelaeuft=0;
     serviceda=0;
-    systemrueck(("systemctl list-units '")+sname+".service' --all --no-legend",obverb,oblog,&sysrueck);  // bei list-units return value immer 0
+    systemrueck("systemctl -a --no-legend list-units '"+sname+".service'",obverb,oblog,&sysrueck);  // bei list-units return value immer 0
     if (!sysrueck.empty()) {
       Log(blau+sysrueck[0]+schwarz,obverb>1?obverb-1:0,oblog);
       if (sysrueck[0].find("active running")!=string::npos) {
-        servicelaeuft=1; 
+        servicelaeuft=1;
         serviceda=1;
         break;
       } else if (sysrueck[0].find("activating")!=string::npos) {
-        if (nureinmal || prf.oberreicht(120)) break;
+        svec srueck;
+        serviceda=1;
+        servicelaeuft=0;
+        systemrueck("systemctl --lines 0 status '"+sname+"' 2>/dev/null",obverb,oblog,&srueck);
+        for(size_t j=0;j<srueck.size();j++) {
+          string *sp=&srueck[j];
+          if (sp->find("exited")!=string::npos) {
+            // z.B.: 'Main PID: 17031 (code=exited, status=255)'
+            // 11.9.16: dann muss selinux angepasst werden
+            size_t gpos=sp->rfind('=');
+            if (gpos<sp->length()-1)
+              fehler=atol(sp->substr(gpos+1).c_str());
+            else 
+              fehler=1;
+            break;
+          } // if (sp->find("exited")!=string::npos) 
+        }
+        if (fehler) break;
+        if (srueck.size()) {
+        } // if (srueck.size()) 
+        if (nureinmal || prf.oberreicht(3)) {
+          break;
+        }
         prf.ausgeb();
       } else if (sysrueck[0].find("loaded")!=string::npos) {
         serviceda=1;
@@ -2310,7 +2385,7 @@ int servc::obslaeuft(int obverb,int oblog, binaer nureinmal)
         break;
       }
     } else { // if (!sysrueck.empty()) 
-     break;
+      break;
     }
   } // while (1)
   if (!serviceda) {

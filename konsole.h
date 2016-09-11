@@ -87,6 +87,7 @@ extern const char *_rot, *_hrot, *_schwarz, *_blau, *_gelb, *_tuerkis, *_hgrau;
 #include <fstream> // kopiere
 #include <algorithm>    // std::transform
 
+extern string nix;
 // typedef const char *TCtp[][Smax];
 typedef const char * const * const TCtp[Smax];
 class TxB // Text-Basisklasse
@@ -163,6 +164,8 @@ enum Tkonsole_
   T_am,
   T_als_Dienst_eingerichtet_von,
   T_Versuch,
+  T_machfit,
+  T_obslaeuft,
   T_konsoleMAX,
 };
 
@@ -379,6 +382,7 @@ class lsyscl
 string obprogda(string prog,int obverb, int oblog);
 enum instprog {keinp,zypper,apt,dnf,yum};
 instprog pruefipr(int obverb=0, int oblog=0);
+string gethome();
 
 #ifdef _MSC_VER
 extern inline void wait();
@@ -529,7 +533,7 @@ std::string dir_name(const std::string& path);
 int systemrueck(const string& cmd, char obverb=0, int oblog=0, vector<string> *rueck=0, 
                 binaer ob0heissterfolg=wahr, binaer obergebnisanzeig=wahr, const string& ueberschr="",vector<errmsgcl> *errm=0);
 void pruefplatte();
-void pruefmehrfach(string& wen);
+void pruefmehrfach(string& wen=nix);
 int setfaclggf(const string& datei, const binaer obunter=falsch, const int mod=4, binaer obimmer=falsch,int obverb=0,int oblog=0);
 int pruefverz(const string& verz,int obverb=0,int oblog=0, uchar obmitfacl=1);
 string aktprogverz();
@@ -565,6 +569,7 @@ class linstcl
 class servc {
   public:
     int servicelaeuft=0, serviceda=0;
+    int fehler=0;
     string sname,ename; // ausgefuehrte Datei
     servc(string vsname,string vename): sname((vsname.empty()?vename:vsname)),ename(vename) {}
     servc(string vsname,string vename,int obverb, int oblog);
