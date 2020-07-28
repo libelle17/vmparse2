@@ -257,7 +257,7 @@ void speichereSender(DB *My, string *Sender, string *Senderemail, const char *lm
   dospeichereAdresse(My,Sender,Senderemail,lmailadn,lmailadid,0,/* eml,*/obverb,oblog);
 } // speichereSender
 
-void speichereEmpfaenger(DB *My, boost::shared_ptr<vmime::mailbox> mbox,unsigned empfArt, const char *lmailadn, vector<empftyp> *empfids,/* string *eml,*/ uchar obverb, uchar oblog) 
+void speichereEmpfaenger(DB *My, vmime::shared_ptr<vmime::mailbox> mbox,unsigned empfArt, const char *lmailadn, vector<empftyp> *empfids,/* string *eml,*/ uchar obverb, uchar oblog) 
 {
   static vmime::charset ch(vmime::charsets::UTF_8);
   vector<instyp> einf; // fuer alle Datenbankeinfuegungen
