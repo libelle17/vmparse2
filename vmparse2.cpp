@@ -353,6 +353,9 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
 #endif
         //        if (name==vmime::fields::CONTENT_TYPE || name==vmime::fields::CONTENT_TRANSFER_ENCODING || name==vmime::fields::CONTENT_DISPOSITION)  Klammer_auf
         if (aktF->getChildComponents().size()>1) {
+//          cout<<"i: "<<i<<endl;
+//          cout<<"zl:"<<hdr->getFieldCount()<<endl;
+          if ((size_t)i<(size_t)hdr->getFieldCount()) {
           vmime::shared_ptr <vmime::parameterizedHeaderField> field = vmime::dynamicCast <vmime::parameterizedHeaderField>(hdr->getFieldAt(i));
           int parz= field->getParameterCount();
           Log(string("  Header-Parz: ")+drot+ltoan(parz)+schwarz,obverb,oblog);
@@ -363,11 +366,11 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
             Log(string("  Header-pVal: ")+drot+pVal.getBuffer()+schwarz,obverb,oblog);
             hparids.push_back(partyp(i,k,PName,pVal.getBuffer()));
           }
+          }
           // folgender Fall tritt ein, wenn ein Parameter im aktuellen Fall fehlt, ist also irrelevant
           //        _gKLZ_ else if (name==vmime::fields::CONTENT_TYPE || name==vmime::fields::CONTENT_TRANSFER_ENCODING || name==vmime::fields::CONTENT_DISPOSITION)  Klammer_auf
           //          "Halt!"<<endl;exit(0);
         }
-
       }
 
       /*		
@@ -510,12 +513,54 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
       Log(string("")+drot+"Datum: "+schwarz+zustr(tag)+"."+zustr(mon)+"."+zustr(jahr)+" "+zustr(std)+":"+zustr(min)+":"+zustr(sek)+" ("+zustr(zone)+")",obverb,oblog);
 #else
       char buf[255];
-      char* serg =
-        strptime(hdr->Date()->generate().substr(6).c_str(), "%a, %d %b %Y %H:%M:%S %z", &mptm);
+      char *serg;
+      for(int spru=0;spru<2;spru++) {
+        if (spru) setlocale(LC_ALL, "de_DE"); else setlocale(LC_ALL, "en_US");
+        serg=strptime(hdr->Date()->generate().substr(6).c_str(), "%a, %d %b %Y %H:%M:%S %z", &mptm);
+      }
+      string ewert;
+      // <<"mptm.tm_year: "<<mptm.tm_year<<endl;
+      for(int spru=0;spru<2;spru++) {
+        if (spru) setlocale(LC_ALL, "de_DE"); else setlocale(LC_ALL, "en_US");
+        if (mptm.tm_year==70 || mptm.tm_year==0) {
+          for(unsigned i=0;i<hdr->getFieldCount();i++) {
+            vmime::shared_ptr <vmime::headerField> aktF= hdr->getFieldAt(i);
+            const string name{aktF->getName()};
+            // <<"name: "<<name<<endl;
+            if (name=="Date") {
+              ewert=aktF->getValue()->generate();
+              // <<"ewert: "<<blau<<ewert<<schwarz<<endl;
+              if ((serg=strptime(&ewert[0], "%a, %d %b %Y %H:%M:%S %z", &mptm))) {
+                strftime(buf, sizeof(buf), "%d.%m.%Y %H:%M:%S %z", &mptm);
+                Log(string("")+drot+"richtiges Datum 1: "+schwarz+buf,obverb,oblog);
+                break;
+              }
+            }
+          }
+        }
+        // <<"mptm.tm_year: "<<mptm.tm_year<<endl;
+        if (mptm.tm_year==70 || mptm.tm_year==0) {
+          for(unsigned i=0;i<hdr->getFieldCount();i++) {
+            vmime::shared_ptr <vmime::headerField> aktF= hdr->getFieldAt(i);
+            const string name{aktF->getName()};
+            if (name=="Received") {
+              ewert=aktF->getValue()->generate();
+              size_t sppos{ewert.rfind("; ")};
+              if (sppos!=string::npos) {
+                ewert.erase(0,sppos+2);
+                if ((serg=strptime(&ewert[0], "%a, %d %b %Y %H:%M:%S %z", &mptm)))
+                  strftime(buf, sizeof(buf), "%d.%m.%Y %H:%M:%S %z", &mptm);
+                Log(string("")+drot+"richtiges Datum 2: "+schwarz+buf,obverb,oblog);
+                break;
+              }
+            }
+          }
+        }
+      }
       if (!serg) Log(string("")+drot+"Fehler beim Datumsetzen bei: "+blau+hdr->Date()->generate()+schwarz,1,1);
-      strftime(buf, sizeof(buf), "%d.%m.%Y %H:%M:%S %z", &mptm);
-      Log(string("")+drot+"Datum: "+schwarz+buf,obverb,oblog);
-      strftime(buf, sizeof(buf), "%Y-%m-%d_%H-%M-%S_%z", &mptm);
+      //      strftime(buf, sizeof(buf), "%d.%m.%Y %H:%M:%S %z", &mptm);
+      //      Log(string("")+drot+"Datum: "+schwarz+buf,obverb,oblog);
+      //      strftime(buf, sizeof(buf), "%Y-%m-%d_%H-%M-%S_%z", &mptm);
       if (mailid=="") mailid = "("+Senderemail+")";
       //      mailid=ersetze(ersetze(mailid,"<","«"),">","»");
       // Kodierung ISO-8859-1
@@ -596,6 +641,7 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
         strftime(buf2, sizeof(buf2), "%Y-%m-%d %H:%M:%S %z", &mptm);
         // <<"touch "<<neupfad1<<endl;
         system((string("touch ")+neupfad1+" -d \""+buf2+"\"").c_str());
+        cout<<rot<<(string("touch ")+neupfad1+" -d \""+buf2+"\"").c_str()<<schwarz<<endl;
         //          <<"Fehler: "<<strerror(errno)<<endl;
         //					<<_rot<<"Fehler beim Datumsetzen von '"<<_schwarz<<neuname<<_rot<<"'"<<_schwarz<<endl;
       }
@@ -715,11 +761,11 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
             ss<<ersetzefuerdatei(attverz)<<ersetzefuerdatei(Kopfzeile)<<" - "<<buf<<" - "<<attname.c_str();
             Log(string("Schreibe Attachm'datei: ")+blau+ss.str()+schwarz,1,1);
             //            ss<<attverz<<"/"<<Kopfzeile<<" "<<mptime_t<<".pdf";
-            system(string(("chmod 774 \"")+ss.str()+"\"").c_str());
-            system(string(("chown schade:praxis \"")+ss.str()+"\"").c_str());
             attdatei.open(ss.str().c_str());
             attdatei<<s_Data;
             attdatei.close();
+            system(string(("chmod 774 \"")+ss.str()+"\"").c_str());
+            system(string(("chown schade:praxis \"")+ss.str()+"\"").c_str());
             struct utimbuf ubuf;
             strftime(buf, sizeof(buf), "%d.%m.%Y %H.%M.%S %z", &mptm);
             Log(string("Dateizeit: ")+buf,obverb,oblog); // asctime(&mptm)
