@@ -562,8 +562,8 @@ int DB::prueftab(Tabelle *ptab,int obverb)
   vector<string> fstr;
   vector<string> istr;
   const char* def_engine="InnoDB";
-  const char* def_charset="latin1";
-  const char* def_collate="latin1_german2_ci";
+  const char* def_charset="utf8mb4";
+  const char* def_collate="utf8mb4_german2_ci";
   const char* def_rowformat="DYNAMIC";
   switch (DBS){
     case MySQL:

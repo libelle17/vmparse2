@@ -231,7 +231,7 @@ void dospeichereAdresse(DB *My, string *Name, string *Mailadr, const char *lmail
   Log(string("")+drot+"  Name: "+schwarz+*Name,obverb,oblog);
   Log(string("")+drot+"  Email: "+schwarz+*Mailadr,obverb,oblog);
   for(int runde=0;runde<2;runde++){
-    if (runde==0) zs.Abfrage("SET NAMES 'utf8'");
+    if (runde==0) zs.Abfrage("SET NAMES 'utf8mb4'");
     else if (runde==1) zs.Abfrage("SET NAMES 'latin1'");
     rins.clear();
     vector<instyp> einf; // fuer alle Datenbankeinfuegungen
@@ -912,7 +912,7 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
   // Email (lmails)
   string lmailid;
   for(int runde=0;runde<2;runde++){
-    if (runde==0) zs.Abfrage("SET NAMES 'utf8'");
+    if (runde==0) zs.Abfrage("SET NAMES 'utf8mb4'");
     else if (runde==1) zs.Abfrage("SET NAMES 'latin1'");
     rins.clear();
     vector<instyp> einf; // fuer alle Datenbankeinfuegungen
@@ -962,7 +962,7 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
 
   // Header-Felder
   for(int runde=0;runde<2;runde++){
-    if (runde==0) zs.Abfrage("SET NAMES 'utf8'");
+    if (runde==0) zs.Abfrage("SET NAMES 'utf8mb4'");
     else if (runde==1) zs.Abfrage("SET NAMES 'latin1'");
     string lmailhfeldid; // ID des aktuellen Textteiles
     for(size_t i=0;i<hfeldids.size();i++){
@@ -986,7 +986,7 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
 
   // Header-Parameter
   for(int runde=0;runde<2;runde++){
-    if (runde==0) zs.Abfrage("SET NAMES 'utf8'");
+    if (runde==0) zs.Abfrage("SET NAMES 'utf8mb4'");
     else if (runde==1) zs.Abfrage("SET NAMES 'latin1'");
     string lmailhparid; // ID des aktuellen Textteiles
     for(size_t i=0;i<hparids.size();i++){
@@ -1015,7 +1015,7 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
     string lmailbodyid; // ID des aktuellen Textteiles
     RS zs(My);
     for(int runde=0;runde<2;runde++){
-      if (runde==0) zs.Abfrage("SET NAMES 'utf8'");
+      if (runde==0) zs.Abfrage("SET NAMES 'utf8mb4'");
       else if (runde==1) zs.Abfrage("SET NAMES 'latin1'");
       rins.clear();
       vector<instyp> einf; // fuer alle Datenbankeinfuegungen
@@ -1049,7 +1049,7 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
 
   // Text-Teile der Mail (lmailtext)
   for(int runde=0;runde<2;runde++){
-    if (runde==0) zs.Abfrage("SET NAMES 'utf8'");
+    if (runde==0) zs.Abfrage("SET NAMES 'utf8mb4'");
     else if (runde==1) zs.Abfrage("SET NAMES 'latin1'");
     string lmailtextid; // ID des aktuellen Textteiles
     for(size_t i=0;i<textids.size();++i){
@@ -1403,7 +1403,7 @@ const char* prueflmails(DB *My,uchar obverb, uchar direkt=0)
     Feld ifelder3[] = {Feld("SenderID")};  Index i3("SenderID",ifelder3,sizeof ifelder3/sizeof* ifelder3);
     Index indices[]={i0,i1,i2,i3};
     // auf jeden Fall ginge "binary" statt "utf8" und "" statt "utf8_general_ci"
-    Tabelle tab(lmailsn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Mails aus den *.linux1-Dateien im eml-Format, mit vmparse1 ausgelesen","InnoDB","utf8","utf8_general_ci","DYNAMIC");
+    Tabelle tab(lmailsn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Mails aus den *.linux1-Dateien im eml-Format, mit vmparse1 ausgelesen","InnoDB","utf8mb4","utf8mb4_german2_ci","DYNAMIC");
     if (My->prueftab(&tab, obverb)) {
       Log(string("Fehler beim Prüfen von: ")+lmailsn,1,1);
       return NULL;
@@ -1425,7 +1425,7 @@ const char* prueflmailad(DB *My,uchar obverb, uchar direkt=0)
     Feld ifelder0[] = {Feld("Name")}; Index i0("Name",ifelder0,sizeof ifelder0/sizeof* ifelder0);
     Feld ifelder1[] = {Feld("Email")}; Index i1("Email",ifelder1,sizeof ifelder1/sizeof* ifelder1);
     Index indices[]={i0,i1};
-    Tabelle tab(lmailadn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Email-Adressen, mit vmp ausgelesen","InnoDB","utf8","utf8_general_ci","DYNAMIC");
+    Tabelle tab(lmailadn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Email-Adressen, mit vmp ausgelesen","InnoDB","utf8mb4","utf8mb4_german2_ci","DYNAMIC");
     if (My->prueftab(&tab,obverb)) {
       Log(string("Fehler beim Prüfen von: ")+lmailadn,1,1);
       return NULL;
@@ -1446,7 +1446,7 @@ const char* prueflmailempf(DB *My,uchar obverb,uchar direkt=0)
     Feld ifelder0[] = {Feld("lmailsID")}; Index i0("lmailsID",ifelder0,sizeof ifelder0/sizeof* ifelder0);
     Feld ifelder1[] = {Feld("lmailadID")}; Index i1("lmailadID",ifelder1,sizeof ifelder1/sizeof* ifelder1);
     Index indices[]={i0,i1};
-    Tabelle tab(lmailempfn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,string("Empfaenger, Bezug zwischen ")+lmailsn+" und "+lmailadn,"InnoDB","utf8","utf8_general_ci","DYNAMIC");
+    Tabelle tab(lmailempfn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,string("Empfaenger, Bezug zwischen ")+lmailsn+" und "+lmailadn,"InnoDB","utf8mb4","utf8mb4_german2_ci","DYNAMIC");
     if (My->prueftab(&tab,obverb)) {
       Log(string("Fehler beim Prüfen von: ")+lmailempfn,1,1);
       return NULL;
@@ -1471,7 +1471,7 @@ const char* prueflmailhpar(DB *My,uchar obverb, uchar direkt=0)
     Feld ifelder2[] = {Feld("wert")};                                 Index i2("wert",ifelder2,sizeof ifelder2/sizeof* ifelder2);
     Index indices[]={i0,i1,i2};
     // auf jeden Fall ginge "binary" statt "utf8" und "" statt "utf8_general_ci"
-    Tabelle tab(lmailhparn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Header-Parameter der Mails","InnoDB","utf8","utf8_general_ci","DYNAMIC");
+    Tabelle tab(lmailhparn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Header-Parameter der Mails","InnoDB","utf8mb4","utf8mb4_german2_ci","DYNAMIC");
     if (My->prueftab(&tab, obverb)) {
       Log(string("Fehler beim Prüfen von: ")+lmailhparn,1,1);
       return NULL;
@@ -1495,7 +1495,7 @@ const char* prueflmailhfeld(DB *My,uchar obverb, uchar direkt=0)
     Feld ifelder2[] = {Feld("wert","","50")};                   Index i2("wert",ifelder2,sizeof ifelder2/sizeof* ifelder2);
     Index indices[]={i0,i1,i2};
     // auf jeden Fall ginge "binary" statt "utf8" und "" statt "utf8_general_ci"
-    Tabelle tab(lmailhfeldn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Headerfelder der Mails","InnoDB","utf8","utf8_general_ci","DYNAMIC");
+    Tabelle tab(lmailhfeldn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Headerfelder der Mails","InnoDB","utf8mb4","utf8mb4_german2_ci","DYNAMIC");
     if (My->prueftab(&tab, obverb)) {
       Log(string("Fehler beim Prüfen von: ")+lmailhfeldn,1,1);
       return NULL;
@@ -1525,7 +1525,7 @@ const char* prueflmailbody(DB *My,uchar obverb, uchar direkt=0)
     Feld ifelder0[] = {Feld("lmailsID"),Feld("lfdnr")}; Index i0("lmailsID_lfdnr",ifelder0,sizeof ifelder0/sizeof* ifelder0);
     Index indices[]={i0};
     // auf jeden Fall ginge "binary" statt "utf8" und "" statt "utf8_general_ci"
-    Tabelle tab(lmailbodyn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Bodyteile der Mails","InnoDB","utf8","utf8_general_ci","DYNAMIC");
+    Tabelle tab(lmailbodyn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Bodyteile der Mails","InnoDB","utf8mb4","utf8mb4_german2_ci","DYNAMIC");
     if (My->prueftab(&tab, obverb)) {
       Log(string("Fehler beim Prüfen von: ")+lmailbodyn,1,1);
       return NULL;
@@ -1547,7 +1547,7 @@ const char* prueflmailtext(DB *My,uchar obverb, uchar direkt=0)
     Feld ifelder0[] = {Feld("lmailsID"),Feld("lfdnr")}; Index i0("lmailsID_lfdnr",ifelder0,sizeof ifelder0/sizeof* ifelder0);
     Index indices[]={i0};
     // auf jeden Fall ginge "binary" statt "utf8" und "" statt "utf8_general_ci"
-    Tabelle tab(lmailtextn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Textteile der Mails","InnoDB","utf8","utf8_general_ci","DYNAMIC");
+    Tabelle tab(lmailtextn,felder,sizeof felder/sizeof* felder,indices,sizeof indices/sizeof *indices,"Textteile der Mails","InnoDB","utf8mb4","utf8mb4_german2_ci","DYNAMIC");
     if (My->prueftab(&tab, obverb)) {
       Log(string("Fehler beim Prüfen von: ")+lmailtextn,1,1);
       return NULL;
