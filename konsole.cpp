@@ -703,7 +703,7 @@ int kuerzelogdatei(const char* logdatei,int obverb)
             }
             //	  <<jetzt<<"- "<<gesz<<"="<<sekunden<<endl;
           } // if (sscanf(Zeile
-          delete[] atm;
+          delete atm;
         } // (!abhier)
         if (abhier) {
           outfile<<Zeile<<endl;
@@ -1052,7 +1052,7 @@ void aufiSplit(vector<string> *tokens, const string *text, const char* sep,bool 
     start = end + len;
   }
   tokens->push_back(text->substr(start));
-  delete usep;
+  delete[] usep;
 } // void aufiSplit(vector<string> *tokens, const string *text, const char* sep,bool nichtmehrfach) 
 
 
