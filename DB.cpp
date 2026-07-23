@@ -177,17 +177,19 @@ DB::DB(DBSTyp nDBS, const char* const phost, const char* const puser,const char*
   init(nDBS,phost,puser,ppasswd,uedb,port,unix_socket,client_flag,obverb,oblog,versuchzahl,ggferstellen);
 }
 
-DB::DB(DBSTyp nDBS, const char* const phost, const char* const puser,const char* const ppasswd, const char* const uedb, 
-       unsigned int port, const char *const unix_socket, unsigned long client_flag,int obverb,int oblog,int versuchzahl,uchar ggferstellen)
+DB::DB(DBSTyp nDBS, const char* const phost, const char* const puser,const char* const ppasswd, const char* const uedb,
+       unsigned int port, const char *const unix_socket, unsigned long client_flag,int obverb,int oblog,int versuchzahl,uchar ggferstellen,
+       const char* const pmcnfdat)
 {
-  init(nDBS,phost,puser,ppasswd,uedb,port,unix_socket,client_flag,obverb,oblog,versuchzahl,ggferstellen);
+  init(nDBS,phost,puser,ppasswd,uedb,port,unix_socket,client_flag,obverb,oblog,versuchzahl,ggferstellen,pmcnfdat);
 }
 
-void DB::init(DBSTyp nDBS, const char* const phost, const char* const puser,const char* const ppasswd, const char* const uedb, 
+void DB::init(DBSTyp nDBS, const char* const phost, const char* const puser,const char* const ppasswd, const char* const uedb,
               unsigned int port, const char *const unix_socket, unsigned long client_flag,int obverb,int oblog,unsigned versuchzahl,
-              uchar ggferstellen)
+              uchar ggferstellen, const char* const pmcnfdat)
 {
   DBS = nDBS;
+  mcnfdat = pmcnfdat;
   fehnr=0;
   string Frage;
   Log(string(Txd[T_DB_wird_initialisiert]),obverb>1,oblog);
@@ -308,7 +310,7 @@ void DB::init(DBSTyp nDBS, const char* const phost, const char* const puser,cons
               case 1698: // dasselbe auf Ubuntu
                 for(unsigned aru=0;aru<1;aru++) {
                   for(unsigned iru=0;iru<2;iru++) {
-                    cmd=string("sudo mysql -uroot -h'")+host+"' "+(rootpwd.empty()?"":string("-p")+rootpwd)+" -e \"GRANT ALL ON "+uedb+".* TO '"+
+                    cmd=string("mysql ")+credarg()+" -e \"GRANT ALL ON "+uedb+".* TO '"+
                       user+"'@'"+myloghost+"' IDENTIFIED BY '"+ersetze(passwd.c_str(),"\"","\\\"")+"' WITH GRANT OPTION\" 2>&1";
                     if (iru) break;
                     pruefrpw(cmd, versuchzahl);
@@ -404,11 +406,19 @@ int DB::usedb(const string& db)
   return fehler;
 } // usedb
 
+// baut das Anmelde-Fragment fuer root-CLI-Befehle: ueber mcnfdat (defaults-extra-file), wenn gesetzt, sonst wie bisher -uroot/-p<rootpwd>
+string DB::credarg() const
+{
+  return mcnfdat.empty()
+    ? (string("-uroot -h'")+host+"' "+(rootpwd.empty()?"":string("-p")+rootpwd))
+    : (string("--defaults-extra-file=")+mcnfdat+" -h'"+host+"'");
+} // DB::credarg
+
 void DB::pruefrpw(const string& wofuer, unsigned versuchzahl)
 {
   myloghost=!strcasecmp(host.c_str(),"localhost")||!strcmp(host.c_str(),"127.0.0.1")||!strcmp(host.c_str(),"::1")?"localhost":"%";
   for(unsigned versuch=0;versuch<versuchzahl;versuch++) {
-    cmd=string("sudo mysql -uroot -h'")+host+"' "+(rootpwd.empty()?"":string("-p")+rootpwd)+" -e \"show variables like 'gibts wirklich nicht'\" 2>&1";
+    cmd=string("mysql ")+credarg()+" -e \"show variables like 'gibts wirklich nicht'\" 2>&1";
     myr.clear();
     systemrueck(cmd,-1,0,&myr);
     miterror=1;
@@ -417,7 +427,7 @@ void DB::pruefrpw(const string& wofuer, unsigned versuchzahl)
       //      Log(string(Txd[T_Fehler_dp])+rot+myr[0]+schwarz+Txd[T_bei_Befehl]+blau+cmd+schwarz,1,1);
     }
     if (miterror) {
-      if (!nrzf) {
+      if (!nrzf && mcnfdat.empty()) {
         rootpwd=Tippstring(string(Txd[T_Benoetige_MySQL_Passwort_fuer_Benutzer_root_fuer_Befehl])+"\n"+tuerkis+wofuer+schwarz+")",0);
         //                    if (rootpwd.empty()) return; // while (1)
         if (user=="root") passwd=rootpwd;
@@ -426,7 +436,7 @@ void DB::pruefrpw(const string& wofuer, unsigned versuchzahl)
       break; // naechster Versuch
     } // if (miterror) KLA KLZ else KLA
   }
-  if (rootpwd.empty()) setzrpw();
+  if (rootpwd.empty() && mcnfdat.empty()) setzrpw();
 } // pruefrpw
 
 void DB::setzrpw()
@@ -438,7 +448,7 @@ void DB::setzrpw()
         rootpwd=Tippstring(Txd[T_Bitte_geben_Sie_ein_MySQL_Passwort_fuer_Benutzer_root_ein],&rootpwd);
         rootpw2=Tippstring(Txd[T_Bitte_geben_Sie_das_MySQL_Passwort_fuer_Benutzer_root_erneut_ein],&rootpw2);
         if (rootpw2==rootpwd && !rootpwd.empty()) {
-          cmd=string("sudo mysql -uroot -h'")+host+"' -e \"GRANT ALL ON *.* TO 'root'@'"+myloghost+
+          cmd=string("mysql ")+credarg()+" -e \"GRANT ALL ON *.* TO 'root'@'"+myloghost+
             "' IDENTIFIED BY '"+ersetzAllezu(rootpwd,"\"","\\\"")+"' WITH GRANT OPTION\"";
           Log(string(Txd[T_Fuehre_aus_db])+blau+cmd+schwarz,1,1);
           int erg __attribute__((unused));
@@ -1154,7 +1164,7 @@ char*** RS::HolZeile()
 {
   switch (db->DBS) {
     case MySQL:
-      if (!obfehl)// Anfrage erfolgreich, Rückgabedaten werden verarbeitet
+      if (!obfehl)// Anfrage erfolgreich, Rï¿½ckgabedaten werden verarbeitet
         if (result) {  // Es liegen Zeilen vor
           row = mysql_fetch_row(result);
           //          lengths = mysql_fetch_lengths(result);

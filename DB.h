@@ -261,6 +261,7 @@ class DB
     string passwd;
     string myloghost; // einheitliche Benennung von 'localhost' bzw. '%'
     string rootpwd; // root-Passwort
+    string mcnfdat; // Pfad zu einer mariadb-defaults-extra-file; wenn nicht leer, ersetzt sie bei Root-CLI-Befehlen '-uroot'/'-p<rootpwd>'
     unsigned int fehnr;
     const char* ConnError;
     string sql;
@@ -273,6 +274,7 @@ class DB
     int usedb(const string& db);
     void pruefrpw(const string& wofuer, unsigned versuchzahl);
     void setzrpw();
+    string credarg() const; // "-uroot -h'<host>' -p<rootpwd>" bzw. "--defaults-extra-file=<mcnfdat> -h'<host>'", je nachdem ob mcnfdat gesetzt ist
     my_ulonglong arows;
     vector< vector<instyp> > ins;
     void erweitern(const string& tab, vector<instyp> einf,uchar obstumm,uchar obsammeln=0, const unsigned long *maxl=0);
@@ -280,17 +282,18 @@ class DB
     int machbinaer(const string& tabs, const string& fmeld,uchar obstumm);
     //	DB(DBSTyp DBS, const char* host, const char* user,const char* passwd, const char* db, unsigned int port, const char *unix_socket, unsigned long client_flag);
     DB();
-    DB(DBSTyp nDBS, const char* const phost, const char* const user,const char* const ppasswd, const char* const uedb="", unsigned int port=0, 
-       const char *const unix_socket=NULL, unsigned long client_flag=0,int obverb=0,int oblog=0,int versuchzahl=3,uchar ggferstellen=1);
+    DB(DBSTyp nDBS, const char* const phost, const char* const user,const char* const ppasswd, const char* const uedb="", unsigned int port=0,
+       const char *const unix_socket=NULL, unsigned long client_flag=0,int obverb=0,int oblog=0,int versuchzahl=3,uchar ggferstellen=1,
+       const char* const pmcnfdat="");
     DB(DBSTyp nDBS, const char* const phost, const char* const user, const char* const ppasswd, const char* const prootpwd, const char* const uedb="", 
        unsigned int port=0, const char *const unix_socket=NULL, unsigned long client_flag=0,int obverb=0,int oblog=0,int versuchzahl=3,
        uchar ggferstellen=1);
     DB(DBSTyp nDBS, const string& phost, const string& puser, const string& ppasswd, const string& uedb, unsigned int port, const char* 
        const unix_socket, unsigned long client_flag,
        int obverb,int oblog,int versuchzahl=3,uchar ggferstellen=1);
-    void init(DBSTyp nDBS, const char* const phost, const char* const user,const char* const ppasswd, const char* const uedb="", unsigned int port=0, 
+    void init(DBSTyp nDBS, const char* const phost, const char* const user,const char* const ppasswd, const char* const uedb="", unsigned int port=0,
               const char *const unix_socket=NULL, unsigned long client_flag=0,int obverb=0,int oblog=0,unsigned versuchzahl=3,
-              uchar ggferstellen=1);
+              uchar ggferstellen=1, const char* const pmcnfdat="");
     ~DB(void);
     /*
        int Abfrage(const char* sql,const char** erg=(const char**)&"", uchar obstumm=0);

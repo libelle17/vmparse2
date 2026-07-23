@@ -1723,7 +1723,7 @@ int getpar(int argc, char** argv, uchar *obverb, uchar *oblog, uchar *logfilenew
   return 1;
 }
 
-void oertliches(const char* host,string *mailpfadp)
+void oertliches(const char*& host,string *mailpfadp)
 {
 #ifdef _WIN32
   // char lpszUsername[255]; DWORD dUsername = sizeof(lpszUsername); GetUserName(lpszUsername, &dUsername);
@@ -1857,8 +1857,9 @@ void loeschefehlende(DB *My,uchar obverb,uchar oblog)
 }
 
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
+  nrzf=1; // laeuft immer aus Cron, darf nie auf interaktive Eingabe warten
   uchar obverb=0;
   uchar oblog=0;
   uchar logfilenew=0;
@@ -1901,7 +1902,7 @@ int main(int argc, char** argv)
   Log(string("Mailpfad: ")+drot+mailpfad+schwarz,1,oblog);
   Log(string("Logpfad: ")+drot+logpfad+schwarz+" (oblog: "+drot+ltoan((int)oblog)+schwarz+")",1,oblog);
   //  DB My;// (MySQL,host,"praxis","sonne",dbq,0,0,0);
-  DB My(myDBS,host,"praxis","sonne",dbq,0,0,0,0);
+  DB My(myDBS,host,"praxis","sonne",dbq,0,0,0,0,0,3,1,"/root/.mysqlrpwd");
   const char *lmailadn = prueflmailad(&My,obverb);
   const char *lmailsn = prueflmails(&My,obverb);
   const char *lmailempfn = prueflmailempf(&My,obverb);
