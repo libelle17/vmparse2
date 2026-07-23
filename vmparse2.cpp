@@ -1857,6 +1857,22 @@ void loeschefehlende(DB *My,uchar obverb,uchar oblog)
 }
 
 
+// liest das "password="-Feld aus einer mariadb-defaults-extra-file (z.B.
+// /root/.mysqlpwd), damit das echte DB-Passwort nicht im Quellcode steht
+// (frueher hier hartcodiert "sonne" - stimmte nicht mehr mit dem echten
+// Passwort in phppwd.php ueberein, das GRANT-Fallback in DB.cpp::init hat
+// dadurch beim erneuten Anlaufen von vmparse2 unbemerkt das produktive
+// praxis-Passwort ueberschrieben und anzeig.php lahmgelegt)
+string leseextrafilepasswort(const string& pfad)
+{
+  ifstream f(pfad.c_str());
+  string zeile;
+  while (getline(f, zeile)) {
+    if (!zeile.compare(0, 9, "password=")) return zeile.substr(9);
+  }
+  return "";
+} // leseextrafilepasswort
+
 int main(int argc, char** argv)
 {
   nrzf=1; // laeuft immer aus Cron, darf nie auf interaktive Eingabe warten
@@ -1902,7 +1918,8 @@ int main(int argc, char** argv)
   Log(string("Mailpfad: ")+drot+mailpfad+schwarz,1,oblog);
   Log(string("Logpfad: ")+drot+logpfad+schwarz+" (oblog: "+drot+ltoan((int)oblog)+schwarz+")",1,oblog);
   //  DB My;// (MySQL,host,"praxis","sonne",dbq,0,0,0);
-  DB My(myDBS,host,"praxis","sonne",dbq,0,0,0,0,0,3,1,"/root/.mysqlrpwd");
+  string praxispwd=leseextrafilepasswort("/root/.mysqlpwd");
+  DB My(myDBS,host,"praxis",praxispwd.c_str(),dbq,0,0,0,0,0,3,1,"/root/.mysqlrpwd");
   const char *lmailadn = prueflmailad(&My,obverb);
   const char *lmailsn = prueflmails(&My,obverb);
   const char *lmailempfn = prueflmailempf(&My,obverb);
