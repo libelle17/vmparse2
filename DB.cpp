@@ -310,7 +310,7 @@ void DB::init(DBSTyp nDBS, const char* const phost, const char* const puser,cons
               case 1698: // dasselbe auf Ubuntu
                 for(unsigned aru=0;aru<1;aru++) {
                   for(unsigned iru=0;iru<2;iru++) {
-                    cmd=string("mysql ")+credarg()+" -e \"GRANT ALL ON "+uedb+".* TO '"+
+                    cmd=string("mariadb ")+credarg()+" -e \"GRANT ALL ON "+uedb+".* TO '"+
                       user+"'@'"+myloghost+"' IDENTIFIED BY '"+ersetze(passwd.c_str(),"\"","\\\"")+"' WITH GRANT OPTION\" 2>&1";
                     if (iru) break;
                     pruefrpw(cmd, versuchzahl);
@@ -418,7 +418,7 @@ void DB::pruefrpw(const string& wofuer, unsigned versuchzahl)
 {
   myloghost=!strcasecmp(host.c_str(),"localhost")||!strcmp(host.c_str(),"127.0.0.1")||!strcmp(host.c_str(),"::1")?"localhost":"%";
   for(unsigned versuch=0;versuch<versuchzahl;versuch++) {
-    cmd=string("mysql ")+credarg()+" -e \"show variables like 'gibts wirklich nicht'\" 2>&1";
+    cmd=string("mariadb ")+credarg()+" -e \"show variables like 'gibts wirklich nicht'\" 2>&1";
     myr.clear();
     systemrueck(cmd,-1,0,&myr);
     miterror=1;
@@ -448,7 +448,7 @@ void DB::setzrpw()
         rootpwd=Tippstring(Txd[T_Bitte_geben_Sie_ein_MySQL_Passwort_fuer_Benutzer_root_ein],&rootpwd);
         rootpw2=Tippstring(Txd[T_Bitte_geben_Sie_das_MySQL_Passwort_fuer_Benutzer_root_erneut_ein],&rootpw2);
         if (rootpw2==rootpwd && !rootpwd.empty()) {
-          cmd=string("mysql ")+credarg()+" -e \"GRANT ALL ON *.* TO 'root'@'"+myloghost+
+          cmd=string("mariadb ")+credarg()+" -e \"GRANT ALL ON *.* TO 'root'@'"+myloghost+
             "' IDENTIFIED BY '"+ersetzAllezu(rootpwd,"\"","\\\"")+"' WITH GRANT OPTION\"";
           Log(string(Txd[T_Fuehre_aus_db])+blau+cmd+schwarz,1,1);
           int erg __attribute__((unused));
