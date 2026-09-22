@@ -515,11 +515,26 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
       Log(string("")+drot+"Datum: "+schwarz+zustr(tag)+"."+zustr(mon)+"."+zustr(jahr)+" "+zustr(std)+":"+zustr(min)+":"+zustr(sek)+" ("+zustr(zone)+")",obverb,oblog);
 #else
       char buf[255];
+      buf[0]=0;
       char *serg;
-      for(int spru=0;spru<2;spru++) {
-        if (spru) setlocale(LC_ALL, "de_DE"); else setlocale(LC_ALL, "en_US");
-        serg=strptime(hdr->Date()->generate().substr(6).c_str(), "%a, %d %b %Y %H:%M:%S %z", &mptm);
+      // erst en_US versuchen (Date-Header sind praktisch immer englisch, RFC 5322); nur bei
+      // Fehlschlag de_DE nachversuchen, statt wie frueher beide Versuche bedingungslos
+      // nacheinander laufen zu lassen und den (meist erfolgreichen) ersten Versuch durch den
+      // (bei englischen Kuerzeln zwangslaeufig scheiternden) zweiten wieder zu verwerfen - das
+      // liess serg/mptm auf dem Fehlschlagsstand stehen und buf uninitialisiert (Speichermuell
+      // im Dateinamen, ungueltige SQL-Werte).
+      setlocale(LC_ALL, "en_US");
+      serg=strptime(hdr->Date()->generate().substr(6).c_str(), "%a, %d %b %Y %H:%M:%S %z", &mptm);
+      if (!serg || mptm.tm_year==70 || mptm.tm_year==0) {
+        tm mptm_de; memset(&mptm_de, 0, sizeof(mptm_de));
+        setlocale(LC_ALL, "de_DE");
+        char *serg_de=strptime(hdr->Date()->generate().substr(6).c_str(), "%a, %d %b %Y %H:%M:%S %z", &mptm_de);
+        if (serg_de && mptm_de.tm_year!=70 && mptm_de.tm_year!=0) {
+          serg=serg_de;
+          mptm=mptm_de;
+        }
       }
+      if (serg && !(mptm.tm_year==70 || mptm.tm_year==0)) strftime(buf, sizeof(buf), "%d.%m.%Y %H:%M:%S %z", &mptm);
       string ewert;
       // <<"mptm.tm_year: "<<mptm.tm_year<<endl;
       for(int spru=0;spru<2;spru++) {
@@ -559,6 +574,9 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
           }
         }
       }
+      setlocale(LC_ALL, "en_US"); // definierten Stand wiederherstellen, sonst schlaegt ein hier
+      // noetiger de_DE-Versuch auf die naechste Mail desselben Laufs durch (strptime/strftime
+      // sind global ueber setlocale gesteuert, nicht pro Aufruf)
       if (!serg) Log(string("")+drot+"Fehler beim Datumsetzen bei: "+blau+hdr->Date()->generate()+schwarz,1,1);
       //      strftime(buf, sizeof(buf), "%d.%m.%Y %H:%M:%S %z", &mptm);
       //      Log(string("")+drot+"Datum: "+schwarz+buf,obverb,oblog);
