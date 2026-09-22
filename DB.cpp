@@ -774,6 +774,22 @@ int DB::prueftab(Tabelle *ptab,int obverb)
   return gesfehlr;
 } // int DB::prueftab(Tabelle *ptab,bool obverb) 
 
+// baut die " DEFAULT ..."-Klausel fuer ALTER TABLE MODIFY COLUMN aus dem von
+// information_schema.columns.COLUMN_DEFAULT gelieferten Wert. Aeltere MySQL/MariaDB-Versionen
+// lieferten dort den nackten, unmaskierten Wert (z.B. NULL) - dieser Code quotete ihn deshalb
+// immer selbst. Neuere MariaDB-Versionen (ab 11.x beobachtet) liefern Text-Defaults dagegen schon
+// fertig gequotet als SQL-Literal (z.B. 'NULL'); das zusaetzliche Quoten ergab dann ungueltiges
+// SQL wie DEFAULT ''NULL'' (doppeltes Anfuehrungszeichen) und liess jede Spaltenverbreiterung
+// scheitern. Numerische Defaults (0 o.ae.) kommen weiterhin unquotiert, deshalb hier je nach
+// vorhandenen umschliessenden Anfuehrungszeichen entscheiden statt versionsabhaengig zu raten.
+static string spaltendefault(const char *dv)
+{
+  if (!dv) return string();
+  string s(dv);
+  bool schonGequotet = s.size()>=2 && s.front()=='\'' && s.back()=='\'';
+  return string(" DEFAULT ")+(schonGequotet?s:("'"+s+"'"));
+}
+
 uchar DB::tuerweitern(const string& tabs, const string& feld,long wlength,uchar obstumm)
 {
   stringstream korr;
@@ -791,7 +807,7 @@ uchar DB::tuerweitern(const string& tabs, const string& feld,long wlength,uchar 
           korr.str(std::string()); korr.clear();
           if (*(*cerg+1) && *(*cerg+2)) {
             korr<<"ALTER TABLE `"<<tabs<<"` MODIFY COLUMN `"<<feld<<"` "<<*(*cerg+1)/*data_type*/<<"("<<wlength<<") "<<
-              (!strcasecmp(*(*cerg+2),"yes")?"NULL":"NOT NULL")<<" "<<(*(*cerg+3)?string("DEFAULT '")+*(*cerg+3)+"'":"")<<
+              (!strcasecmp(*(*cerg+2),"yes")?"NULL":"NOT NULL")<<spaltendefault(*(*cerg+3))<<
               " COMMENT '"<<ersetzAllezu(*(*cerg+4),"'","\\'")<<"'";
             RS spaltaend(this,korr.str(),255/*obstumm*/);
             if (spaltaend.fnr==1074) {
@@ -810,7 +826,7 @@ uchar DB::tuerweitern(const string& tabs, const string& feld,long wlength,uchar 
               if (!neufeld.empty()) {
                 Log(string(Txd[T_Aendere_Feld])+tabs+"."+feld+" von: "+*(*cerg+1)+" auf: "+neufeld,1,1);
                 korr<<"ALTER TABLE `"<<tabs<<"` MODIFY COLUMN `"<<feld<<"` "<<neufeld/*data_type*/<<" "<<
-                  (!strcasecmp(*(*cerg+2),"yes")?"NULL":"NOT NULL")<<" "<<(*(*cerg+3)?string("DEFAULT '")+*(*cerg+3)+"'":"")<<
+                  (!strcasecmp(*(*cerg+2),"yes")?"NULL":"NOT NULL")<<spaltendefault(*(*cerg+3))<<
                   " COMMENT '"<<ersetzAllezu(*(*cerg+4),"'","\\'")<<"'";
                 RS spaltaend2(this,korr.str(),255/*obstumm*/);
               }
@@ -878,7 +894,7 @@ int DB::machbinaer(const string& tabs, const string& fmeld,uchar obstumm)
         while(1) { 
           korr.str(std::string()); korr.clear();
           korr<<"ALTER TABLE `"<<tabs<<"` MODIFY COLUMN `"<<feld<<"` "<<neufeld/*data_type*/<<"("<<lenge<<") "<<
-            (!strcasecmp(*(*cerg+2),"yes")?"NULL":"NOT NULL")<<" "<<(*(*cerg+3)?string("DEFAULT '")+*(*cerg+3)+"'":"")<<
+            (!strcasecmp(*(*cerg+2),"yes")?"NULL":"NOT NULL")<<spaltendefault(*(*cerg+3))<<
             " COMMENT '"<<ersetzAllezu(*(*cerg+4),"'","\\'")<<"'";
           RS spaltaend(this,korr.str(),255/*obstumm*/);
           if (mysql_errno(this->conn)!=1406) break;
