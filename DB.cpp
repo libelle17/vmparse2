@@ -224,7 +224,7 @@ void DB::init(DBSTyp nDBS, const char* const phost, const char* const puser,cons
               installiert=0;
           }
           if (installiert) 
-            if (systemrueck("which mysql 2>/dev/null",obverb,oblog)) 
+            if (systemrueck("which mariadb 2>/dev/null",obverb,oblog)) 
               installiert=0;
           if (installiert) break;
           //        systemrueck("which zypper && zypper -n in mariadb || { which apt-get && apt-get --assume-yes install mariadb-server; }",1,1);
@@ -233,7 +233,7 @@ void DB::init(DBSTyp nDBS, const char* const phost, const char* const puser,cons
         // Datenverzeichnis suchen und pruefen
         if (installiert) {
           svec zrueck;
-          if (!systemrueck("sed 's/#.*$//g' `mysql --help | sed -n '/Default options/{n;p}'` 2>/dev/null "
+          if (!systemrueck("sed 's/#.*$//g' `mariadb --help | sed -n '/Default options/{n;p}'` 2>/dev/null "
                 "| grep datadir | cut -d'=' -f2",obverb,oblog,&zrueck)) {
             if (zrueck.size()) {
               datadir=zrueck[zrueck.size()-1];  
