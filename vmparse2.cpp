@@ -53,6 +53,8 @@ using namespace std;
 string out1;
 string attverz;
 string attanf;
+string dokuser="sturm"; // Besitzer (Benutzer) neu angelegter/verschobener Dateien in dokvz und attverz, siehe -du
+string dokgroup="praxis"; // Besitzer (Gruppe) dazu, siehe -dg
 
 class empftyp 
 {
@@ -629,9 +631,8 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
       _gKLZ_
        */
       //      if (rename(nachr->c_str(),neupfad.c_str())) exit(1);
-      //      if (system((string("touch \"")+neupfad1+"\"").c_str())) exit(1);
-      //        system((string("chmod 774 \"")+neupfad1+"\"").c_str());
-      //        system((string("chown sturm:praxis \"")+neupfad1+"\"").c_str());
+      system((string("chmod 770 \"")+neupfad1+"\"").c_str());
+      system((string("chown ")+dokuser+":"+dokgroup+" \""+neupfad1+"\"").c_str());
       struct utimbuf ubuf;
       ubuf.modtime = mktime(&mptm);
       ubuf.actime = ubuf.modtime;
@@ -764,8 +765,8 @@ int zeigNachricht(string *nachr,struct stat *entrystatp, DB *My, const char* lma
             attdatei.open(ss.str().c_str());
             attdatei<<s_Data;
             attdatei.close();
-            system(string(("chmod 774 \"")+ss.str()+"\"").c_str());
-            system(string(("chown schade:praxis \"")+ss.str()+"\"").c_str());
+            system(string(("chmod 770 \"")+ss.str()+"\"").c_str());
+            system(string(("chown ")+dokuser+":"+dokgroup+" \""+ss.str()+"\"").c_str());
             struct utimbuf ubuf;
             strftime(buf, sizeof(buf), "%d.%m.%Y %H.%M.%S %z", &mptm);
             Log(string("Dateizeit: ")+buf,obverb,oblog); // asctime(&mptm)
@@ -1641,6 +1642,20 @@ int getpar(int argc, char** argv, uchar *obverb, uchar *oblog, uchar *logfilenew
         Log(string(drot)+"Fehler: Parameter -ad oder --attdir ohne Verzeichnis angegeben!"+schwarz,1,1);
         *hilfe=1;
       }
+    } else if (!strcmp(argv[i],"-du") || !strcmp(argv[i],"/du") || !strcmp(argv[i],"--dokuser")){
+      if (i<argc-1 && argv[i+1][0]) {
+        dokuser=argv[++i];
+      } else {
+        Log(string(drot)+"Fehler: Parameter -du oder --dokuser ohne Namen angegeben!"+schwarz,1,1);
+        *hilfe=1;
+      }
+    } else if (!strcmp(argv[i],"-dg") || !strcmp(argv[i],"/dg") || !strcmp(argv[i],"--dokgroup")){
+      if (i<argc-1 && argv[i+1][0]) {
+        dokgroup=argv[++i];
+      } else {
+        Log(string(drot)+"Fehler: Parameter -dg oder --dokgroup ohne Namen angegeben!"+schwarz,1,1);
+        *hilfe=1;
+      }
     } else if (!strcmp(argv[i],"-h") || !strcmp(argv[i],"/h")|| !strcmp(argv[i],"-?")  || !strcmp(argv[i],"/?") || !strcmp(argv[i],"--hilfe")|| !strcmp(argv[i],"--help")){
       *hilfe=1;
     } else if (!strcmp(argv[i],"-d") || !strcmp(argv[i],"/d") || !strcmp(argv[i],"--delete")){
@@ -1713,6 +1728,8 @@ int getpar(int argc, char** argv, uchar *obverb, uchar *oblog, uchar *logfilenew
     cout<<drot<<" -zs, --zeigstandan"<<_schwarz<<" zeigt vorher den Fuellungszustand der Dateien an "<<"'\n";
     cout<<drot<<" -ap, --attmuster <muster>"<<_schwarz<<": attmuster wird von 'fax.pdf' auf <"<<"muster"<<"> geaendert\n";
     cout<<drot<<" -ad, --attdir <attverz>"<<_schwarz<<": attverz wird von '"<<drot<<attverz<<schwarz<<"' auf <"<<drot<<"attverz"<<"> geaendert\n";
+    cout<<drot<<" -du, --dokuser <name>"<<_schwarz<<": Besitzer (Benutzer) neu angelegter Dateien statt '"<<drot<<dokuser<<schwarz<<"'\n";
+    cout<<drot<<" -dg, --dokgroup <name>"<<_schwarz<<": Besitzer (Gruppe) neu angelegter Dateien statt '"<<drot<<dokgroup<<schwarz<<"'\n";
     cout<<drot<<" -od, --opendir"<<_schwarz<<": sucht Dateien mit opendir() anstatt mit find \n";
     cout<<drot<<" -ru <datum>"<<_schwarz<<": benennt die Mails ab <"<<drot<<"datum"<<schwarz<<"> zurueck und loescht sie dann aus der Datenbank\n";
     cout<<drot<<" -db <dbname>"<<_schwarz<<": verwendet die Datenbank <"<<drot<<"dbname"<<schwarz<<"> anstatt \""<<drot<<dbq<<schwarz<<"\"\n";
